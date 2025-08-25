@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "Gerador de Dados para Inputs",
+    "version": "1.0.0",
+    "description": "Adiciona opções ao menu de contexto de inputs para gerar dados aleatórios e válidos.",
+    "permissions": [
+        "contextMenus",
+        "scripting",
+        "activeTab"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
+    }
+}
