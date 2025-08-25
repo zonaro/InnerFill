@@ -1,3 +1,16 @@
+// Cartão de crédito
+chrome.contextMenus.create({
+    id: "cartao-credito",
+    parentId: "submenu-pessoal",
+    title: "Cartão de Crédito (sem máscara)",
+    contexts: ["editable"]
+});
+chrome.contextMenus.create({
+    id: "cartao-credito-mascara",
+    parentId: "submenu-pessoal",
+    title: "Cartão de Crédito (com máscara)",
+    contexts: ["editable"]
+});
 chrome.contextMenus.create({
     id: "preencher-formulario-completo",
     parentId: "gerar-dados",
@@ -289,6 +302,33 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 function gerarValorNoInput(tipo, brasilCache) {
+    function gerarCartaoCredito() {
+        // Gera número de cartão de crédito válido (Visa/Mastercard, 16 dígitos, Luhn)
+        // Prefixos comuns: Visa (4), Mastercard (5)
+        const prefixos = ["4", "5"];
+        let num = prefixos[rand(prefixos.length)];
+        for (let i = 0; i < 14; ++i) num += rand(10);
+        // Calcular dígito verificador (Luhn)
+        function luhn(s) {
+            let sum = 0, alt = false;
+            for (let i = s.length - 1; i >= 0; i--) {
+                let n = parseInt(s[i]);
+                if (alt) {
+                    n *= 2;
+                    if (n > 9) n -= 9;
+                }
+                sum += n;
+                alt = !alt;
+            }
+            return (10 - (sum % 10)) % 10;
+        }
+        num += luhn(num);
+        return num;
+    }
+    function mascaraCartaoCredito(cc) {
+        // 1234567812345678 => 1234 5678 1234 5678
+        return cc.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+    }
     function gerarEmail() {
         const nomes = ["ana", "bruno", "carlos", "daniela", "eduardo", "fernanda", "gabriel", "helena", "igor", "juliana", "lucas", "mariana", "nicolas", "olivia", "paulo", "rafaela", "samuel", "tatiane", "vinicius", "yasmin"];
         const doms = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "uol.com.br", "bol.com.br", "terra.com.br"];
@@ -374,103 +414,73 @@ function gerarValorNoInput(tipo, brasilCache) {
         const cidade = brasilCache[rand(brasilCache.length)];
         const ibge = cidade.IBGE.toString().padStart(7, '0');
         const uf = estados[parseInt(ibge.substring(0, 2))] || "UF";
-        return uf;
+        function gerarNumero100() {
+            return `${rand(100)}`;
+        }
+        function gerarNumero1000() {
+            return `${rand(1000)}`;
+        }
+        function gerarSenhaForte() {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
+            let s = "";
+            for (let i = 0; i < 12; ++i) s += chars[rand(chars.length)];
+            return s;
+        }
+        function mascaraCPF(cpf) {
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+        }
+        function mascaraCNPJ(cnpj) {
+            return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+        }
+        function mascaraCEP(cep) {
+            return cep.replace(/(\d{5})(\d{3})/, "$1-$2");
+        }
+        function mascaraTelefone(tel) {
+            // Sempre aplica o formato #####-#### para 9 dígitos
+            return tel.replace(/(\d{5})(\d{4})/, "$1-$2");
+        }
+        function mascaraTelefoneDDD(tel) {
+            // tel: (XX) NNNNNNNN ou (XX) NNNNNNNNN
+            return tel.replace(/\((\d{2})\)\s?(\d{4,5})(\d{4})/, "($1) $2-$3");
+        }
+        const map = {
+            "nome": gerarNome(),
+            "nome-completo": gerarNomeCompleto(),
+            "cnpj": gerarCNPJ(),
+            "cnpj-mascara": mascaraCNPJ(gerarCNPJ()),
+            "cpf": gerarCPF(),
+            "cpf-mascara": mascaraCPF(gerarCPF()),
+            "rg": gerarRG(),
+            "cnh": gerarCNH(),
+            "telefone": gerarTelefone(),
+            "telefone-mascara": mascaraTelefone(gerarTelefone()),
+            "telefone-ddd": gerarTelefoneDDD(),
+            "telefone-ddd-mascara": mascaraTelefoneDDD(gerarTelefoneDDD()),
+            "email": gerarEmail(),
+            "endereco-completo": gerarEnderecoCompleto(),
+            "logradouro": gerarLogradouro(),
+            "bairro": gerarBairro(),
+            "cidade": gerarCidade(),
+            "estado": gerarEstado(),
+            "ibge": gerarIBGE(),
+            "cep": gerarCEP().replace("-", ""),
+            "cep-mascara": gerarCEP(),
+            "cor-hex": gerarCorHex(),
+            "data-aleatoria": gerarDataAleatoria(),
+            "data-aleatoria-18": gerarDataAleatoria18(),
+            "numero-9999": gerarNumero9999(),
+            "numero-10": gerarNumero10(),
+            "numero-100": gerarNumero100(),
+            "numero-1000": gerarNumero1000(),
+            "senha-forte": gerarSenhaForte(),
+            "cartao-credito": gerarCartaoCredito(),
+            "cartao-credito-mascara": mascaraCartaoCredito(gerarCartaoCredito())
+        };
+        const valor = map[tipo] || "";
+        if (document.activeElement && document.activeElement.value !== undefined) {
+            document.activeElement.value = valor;
+            document.activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        // Fim da função gerarValorNoInput
     }
-    function gerarIBGE() {
-        if (!Array.isArray(brasilCache) || brasilCache.length === 0) return "0000000";
-        return brasilCache[rand(brasilCache.length)].IBGE;
-    }
-    function gerarCEP() {
-        let n = [];
-        for (let i = 0; i < 8; ++i) n.push(rand(10));
-        return `${n[0]}${n[1]}${n[2]}${n[3]}${n[4]}-${n[5]}${n[6]}${n[7]}`;
-    }
-    function gerarCorHex() {
-        return `#${rand(256).toString(16).padStart(2, '0')}${rand(256).toString(16).padStart(2, '0')}${rand(256).toString(16).padStart(2, '0')}`;
-    }
-    function gerarDataAleatoria() {
-        const start = new Date(1970, 0, 1).getTime();
-        const end = new Date().getTime();
-        const d = new Date(start + Math.random() * (end - start));
-        return d.toISOString().slice(0, 10);
-    }
-    function gerarDataAleatoria18() {
-        const end = new Date();
-        end.setFullYear(end.getFullYear() - 18);
-        const start = new Date(1950, 0, 1).getTime();
-        const d = new Date(start + Math.random() * (end.getTime() - start));
-        return d.toISOString().slice(0, 10);
-    }
-    function gerarNumero9999() {
-        return `${rand(10000)}`;
-    }
-    function gerarNumero10() {
-        return `${rand(10)}`;
-    }
-    function gerarNumero100() {
-        return `${rand(100)}`;
-    }
-    function gerarNumero1000() {
-        return `${rand(1000)}`;
-    }
-    function gerarSenhaForte() {
-        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=";
-        let s = "";
-        for (let i = 0; i < 12; ++i) s += chars[rand(chars.length)];
-        return s;
-    }
-    function mascaraCPF(cpf) {
-        return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-    }
-    function mascaraCNPJ(cnpj) {
-        return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-    }
-    function mascaraCEP(cep) {
-        return cep.replace(/(\d{5})(\d{3})/, "$1-$2");
-    }
-    function mascaraTelefone(tel) {
-        // Sempre aplica o formato #####-#### para 9 dígitos
-        return tel.replace(/(\d{5})(\d{4})/, "$1-$2");
-    }
-    function mascaraTelefoneDDD(tel) {
-        // tel: (XX) NNNNNNNN ou (XX) NNNNNNNNN
-        return tel.replace(/\((\d{2})\)\s?(\d{4,5})(\d{4})/, "($1) $2-$3");
-    }
-    const map = {
-        "nome": gerarNome(),
-        "nome-completo": gerarNomeCompleto(),
-        "cnpj": gerarCNPJ(),
-        "cnpj-mascara": mascaraCNPJ(gerarCNPJ()),
-        "cpf": gerarCPF(),
-        "cpf-mascara": mascaraCPF(gerarCPF()),
-        "rg": gerarRG(),
-        "cnh": gerarCNH(),
-        "telefone": gerarTelefone(),
-        "telefone-mascara": mascaraTelefone(gerarTelefone()),
-        "telefone-ddd": gerarTelefoneDDD(),
-        "telefone-ddd-mascara": mascaraTelefoneDDD(gerarTelefoneDDD()),
-        "email": gerarEmail(),
-        "endereco-completo": gerarEnderecoCompleto(),
-        "logradouro": gerarLogradouro(),
-        "bairro": gerarBairro(),
-        "cidade": gerarCidade(),
-        "estado": gerarEstado(),
-        "ibge": gerarIBGE(),
-        "cep": gerarCEP().replace("-", ""),
-        "cep-mascara": gerarCEP(),
-        "cor-hex": gerarCorHex(),
-        "data-aleatoria": gerarDataAleatoria(),
-        "data-aleatoria-18": gerarDataAleatoria18(),
-        "numero-9999": gerarNumero9999(),
-        "numero-10": gerarNumero10(),
-        "numero-100": gerarNumero100(),
-        "numero-1000": gerarNumero1000(),
-        "senha-forte": gerarSenhaForte()
-    };
-    const valor = map[tipo] || "";
-    if (document.activeElement && document.activeElement.value !== undefined) {
-        document.activeElement.value = valor;
-        document.activeElement.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    // Fim da função gerarValorNoInput
 }
