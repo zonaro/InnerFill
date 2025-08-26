@@ -169,6 +169,8 @@ function gerarIBGE() {
 }
 
 // Exporta todas as funções para uso via import ES6
+
+// Exporta para ES6 e também para window.geradores (uso global em scripts injetados)
 export {
     gerarBairro, gerarCartaoCredito, gerarCEP, gerarCidade, gerarCNH, gerarCNPJ, gerarCorHex, gerarCPF, gerarDataAleatoria,
     gerarDataAleatoria18, gerarEmail, gerarEnderecoCompleto, gerarEstado, gerarIBGE, gerarLogradouro, gerarNome, gerarNomeCompleto, gerarNumero10,
@@ -176,4 +178,13 @@ export {
     gerarNumero1000, gerarNumero9999, gerarRG, gerarSenhaForte, gerarSobrenome, gerarTelefone,
     gerarTelefoneDDD, mascaraCartaoCredito, mascaraCEP, mascaraCNPJ, mascaraCPF, rand
 };
+
+if (typeof window !== "undefined") {
+    window.geradores = {
+        gerarBairro, gerarCartaoCredito, gerarCEP, gerarCidade, gerarCNH, gerarCNPJ, gerarCorHex, gerarCPF, gerarDataAleatoria,
+        gerarDataAleatoria18, gerarEmail, gerarEnderecoCompleto, gerarEstado, gerarIBGE, gerarLogradouro, gerarNome, gerarNomeCompleto, gerarNumero10,
+        gerarNumero100, gerarNumero1000, gerarNumero9999, gerarRG, gerarSenhaForte, gerarSobrenome, gerarTelefone,
+        gerarTelefoneDDD, mascaraCartaoCredito, mascaraCEP, mascaraCNPJ, mascaraCPF, rand
+    };
+}
 
