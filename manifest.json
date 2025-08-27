@@ -9,9 +9,11 @@
         "activeTab"
     ],
     "background": {
-        "service_worker": "background.js",
-        "type": "module"
+        "service_worker": "background.js"
     },
+    "host_permissions": [
+        "<all_urls>"
+    ],
     "icons": {
         "16": "icon16.png",
         "48": "icon48.png",
